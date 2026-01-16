@@ -25,7 +25,7 @@
 <body>
   <div id="hud">
     <div><strong>IoT Hub Globe</strong></div>
-    <select id="deviceSelect"></select>
+    <div style="margin-top:8px;"><strong>Device:</strong> espKleveNeo7M</div>
     <button id="refreshBtn">Refresh</button>
 
     <div class="row" id="latestBox">Latest: (loading...)</div>
@@ -45,7 +45,7 @@
       baseLayerPicker: true,
     });
 
-    const deviceSelect = document.getElementById("deviceSelect");
+
     const latestBox = document.getElementById("latestBox");
     const weatherBox = document.getElementById("weatherBox");
     const refreshBtn = document.getElementById("refreshBtn");
@@ -120,8 +120,7 @@
     }
 
     async function refreshAll() {
-      const deviceId = deviceSelect.value;
-      if (!deviceId) return;
+      const deviceId = DEVICE_ID;
 
       latestBox.textContent = "Latest: loading...";
       weatherBox.textContent = "Weather: loading...";
@@ -147,10 +146,9 @@
     }
 
     refreshBtn.addEventListener("click", refreshAll);
-    deviceSelect.addEventListener("change", refreshAll);
+    
 
     (async () => {
-      await loadDevices();
       await refreshAll();
     })();
   </script>

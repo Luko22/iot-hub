@@ -1,36 +1,35 @@
 <!doctype html>
 <html>
 <head>
+  <link rel="icon" href="/robot.ico">
   <meta charset="utf-8" />
   <title>IoT Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 40px; }
-    .card { max-width: 820px; padding: 18px 20px; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 14px; }
+    .card { max-width: 720px; padding: 18px 20px; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 14px; }
     a { text-decoration: none; }
-    .muted { color: #555; }
   </style>
 </head>
 <body>
   <h1>IoT Hub</h1>
-  <p class="muted">Local-first dashboard (Raspberry Pi).</p>
 
-  <div class="card">
-    <h2>Geospatial Telemetry</h2>
-    <p>3D globe visualization + latest telemetry.</p>
-    <p><a href="/globe">Open Globe</a></p>
+ <div class="card">
+    <h2>Raspberry Pi Camera</h2>
+    <p>Take photos and videos using the Raspberry Pi camera module.</p>
+    <p><a href="http://192.168.230.93:1984/stream.html?src=picam&mode=webrtc">Start Pi camera Stream</a></p>
   </div>
 
   <div class="card">
     <h2>Grafana Dashboards</h2>
-    <p>Temperature vs time and humidity vs time.</p>
-    <p><a href="http://localhost:3000" target="_blank" rel="noopener">Open Grafana</a></p>
+    <p>Geospatial and Telemetry data from PostgreSQL.</p>
+    <p><a href="http://192.168.230.93:3000/public-dashboards/a2d0d57861b64c0eb79746b65ecd38f9" target="_blank">Open Grafana Dashboard</a></p>
   </div>
 
   <div class="card">
     <h2>API</h2>
-    <p><a href="/api/devices" target="_blank" rel="noopener">/api/devices</a></p>
-    <p><a href="/api/devices/espKleveNeo7M/latest" target="_blank" rel="noopener">/api/devices/{device}/latest</a></p>
+    <p><a href="/api/devices" target="_blank">/api/devices</a></p>
   </div>
 </body>
 </html>
+

@@ -1,3 +1,5 @@
+//I want esp32 and wifi to be put to sleep mode when motion is not detetcted and for when motion is, to take a picture with flash and send it to the iot hub, somehow
+
 #include <credentials.h> //to hide sensitive credentials
 
 #include <WiFi.h>

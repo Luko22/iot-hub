@@ -47,6 +47,7 @@ services:
       - "8080:80"
     volumes:
       - ./backend:/var/www
+      - ./media:/var/media
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - laravel
@@ -64,8 +65,20 @@ services:
       - grafana-data:/var/lib/grafana
     depends_on:
       - postgres
-
+  
+  go2rtc:
+    image: alexxit/go2rtc:latest
+    container_name: go2rtc
+    restart: unless-stopped
+    network_mode: host
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
+    volumes:
+      - ./go2rtc/go2rtc.yaml:/config/go2rtc.yaml
 
 volumes:
   pgdata:
   grafana-data:
+
+  

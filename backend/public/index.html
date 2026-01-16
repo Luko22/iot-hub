@@ -1,6 +1,9 @@
 <!doctype html>
 <html>
 <head>
+
+  <link rel="icon" href="/robot.ico">
+
   <meta charset="utf-8" />
   <title>IoT Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,15 +17,16 @@
   <h1>IoT Hub</h1>
 
   <div class="card">
-    <h2>Geospatial Telemetry</h2>
-    <p>Globe visualization + latest temperature/humidity + current weather overlay.</p>
-    <p><a href="/globe">Open Globe</a></p>
+    <h2>Raspberry Pi Camera</h2>
+    <p>Take photos and videos using the Raspberry Pi camera module.</p>
+    <p><a href="http://192.168.230.93:1984/stream.html?src=picam&mode=webrtc">Start Pi camera Stream</a></p>
   </div>
+<!-- MUST RUN: [rpicam-vid -t 0 --inline --listen --nopreview -o tcp://0.0.0.0:8556]-->
 
   <div class="card">
     <h2>Grafana Dashboards</h2>
-    <p>Temperature vs Time and Humidity vs Time from PostgreSQL.</p>
-    <p><a href="http://localhost:3000" target="_blank">Open Grafana</a></p>
+    <p>Geospatial and Telemetry data from PostgreSQL.</p>
+    <p><a href="http://192.168.230.93:3000/public-dashboards/a2d0d57861b64c0eb79746b65ecd38f9" target="_blank">Open Grafana Dashboard</a></p>
   </div>
 
   <div class="card">
