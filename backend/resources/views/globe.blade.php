@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>IoT Hub Globe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    #hud {
+      position: absolute; top: 12px; left: 12px; z-index: 10;
+      background: rgba(0,0,0,0.65); color: #fff; padding: 10px 12px; border-radius: 10px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      max-width: 360px;
+    }
+    #hud select, #hud button { width: 100%; margin-top: 8px; padding: 8px; }
+    #hud .row { margin-top: 8px; font-size: 14px; line-height: 1.35; }
+    a { color: #9bd; }
+  </style>
+
+  <!-- CesiumJS from CDN for local dev -->
+  <script src="https://unpkg.com/cesium/Build/Cesium/Cesium.js"></script>
+  <link href="https://unpkg.com/cesium/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div id="hud">
+    <div><strong>IoT Hub Globe</strong></div>
+    <select id="deviceSelect"></select>
+    <button id="refreshBtn">Refresh</button>
+
+    <div class="row" id="latestBox">Latest: (loading...)</div>
+    <div class="row" id="weatherBox">Weather: (loading...)</div>
+    <div class="row" style="opacity:0.9">
+      API: <a href="/api/devices" target="_blank">/api/devices</a>
+    </div>
+  </div>
+
+  <div id="cesiumContainer"></div>
+
+  <script>
+    const API_BASE = ""; // same host
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      timeline: false,
+      animation: false,
+      baseLayerPicker: true,
+    });
+
+    const deviceSelect = document.getElementById("deviceSelect");
+    const latestBox = document.getElementById("latestBox");
+    const weatherBox = document.getElementById("weatherBox");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    let trackEntity = null;
+    let lastPointEntity = null;
+
+    async function loadDevices() {
+      const res = await fetch(`${API_BASE}/api/devices`);
+      const devices = await res.json();
+
+      deviceSelect.innerHTML = "";
+      // devices can be [{device_id:"..."}] depending on your controller
+      for (const d of devices) {
+        const id = d.device_id ?? d;
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = id;
+        deviceSelect.appendChild(opt);
+      }
+    }
+
+    async function loadLatest(deviceId) {
+      const res = await fetch(`${API_BASE}/api/devices/${encodeURIComponent(deviceId)}/latest`);
+      if (!res.ok) throw new Error("No latest telemetry");
+      return await res.json();
+    }
+
+    async function loadTrack(deviceId) {
+      const res = await fetch(`${API_BASE}/api/devices/${encodeURIComponent(deviceId)}/track?hours=24`);
+      return await res.json();
+    }
+
+    // Open-Meteo current weather: no key needed, open-source. :contentReference[oaicite:4]{index=4}
+    async function loadWeather(lat, lon) {
+      const url =
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=UTC`;
+      const res = await fetch(url);
+      return await res.json();
+    }
+
+    function setEntities(track) {
+      // track: [{latitude, longitude, created_at}, ...]
+      const positions = track
+        .filter(p => p.latitude != null && p.longitude != null)
+        .map(p => Cesium.Cartesian3.fromDegrees(Number(p.longitude), Number(p.latitude)));
+
+      if (trackEntity) viewer.entities.remove(trackEntity);
+      if (lastPointEntity) viewer.entities.remove(lastPointEntity);
+
+      if (positions.length >= 2) {
+        trackEntity = viewer.entities.add({
+          name: "Track",
+          polyline: {
+            positions,
+            width: 3,
+          }
+        });
+      }
+
+      if (positions.length >= 1) {
+        const last = positions[positions.length - 1];
+        lastPointEntity = viewer.entities.add({
+          name: "Last Fix",
+          position: last,
+          point: { pixelSize: 10 },
+        });
+
+        viewer.camera.flyTo({ destination: last });
+      }
+    }
+
+    async function refreshAll() {
+      const deviceId = deviceSelect.value;
+      if (!deviceId) return;
+
+      latestBox.textContent = "Latest: loading...";
+      weatherBox.textContent = "Weather: loading...";
+
+      const latest = await loadLatest(deviceId);
+      latestBox.textContent =
+        `Latest: ${latest.created_at} | ` +
+        `T=${latest.temperature}°C H=${latest.humidity}% | ` +
+        `lat=${Number(latest.latitude).toFixed(6)} lon=${Number(latest.longitude).toFixed(6)}`;
+
+      const track = await loadTrack(deviceId);
+      setEntities(track);
+
+      const wx = await loadWeather(latest.latitude, latest.longitude);
+      if (wx?.current) {
+        weatherBox.textContent =
+          `Weather (Open-Meteo, UTC): ` +
+          `T=${wx.current.temperature_2m}°C RH=${wx.current.relative_humidity_2m}% ` +
+          `Wind=${wx.current.wind_speed_10m} m/s`;
+      } else {
+        weatherBox.textContent = "Weather: unavailable";
+      }
+    }
+
+    refreshBtn.addEventListener("click", refreshAll);
+    deviceSelect.addEventListener("change", refreshAll);
+
+    (async () => {
+      await loadDevices();
+      await refreshAll();
+    })();
+  </script>
+</body>
+</html>
