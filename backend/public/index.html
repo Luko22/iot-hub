@@ -19,7 +19,12 @@
   <div class="card">
     <h2>Raspberry Pi Camera</h2>
     <p>Take photos and videos using the Raspberry Pi camera module.</p>
-    <p><a href="http://192.168.230.93:1984/stream.html?src=picam&mode=webrtc">Start Pi camera Stream</a></p>
+    <p>
+      <button id="startBtn">Start Stream</button>
+      <button id="snapshotBtn">Take Snapshot</button>
+      <button id="recordBtn">Start Recording (10s)</button>
+    </p>
+    <div id="cameraStatus"></div>
   </div>
 <!-- MUST RUN: [rpicam-vid -t 0 --inline --listen --nopreview -o tcp://0.0.0.0:8556]-->
 
@@ -33,5 +38,66 @@
     <h2>API</h2>
     <p><a href="/api/devices" target="_blank">/api/devices</a></p>
   </div>
+
+  <script>
+    // Configure host addresses
+    const HOST = window.location.hostname || '192.168.230.93';
+    const CAMERA_SERVICE_BASE = `http://${HOST}:5001`;
+    const GO2RTC_PLAYER = `http://${HOST}:1984/stream.html?src=picam&mode=webrtc`;
+
+    const statusEl = document.getElementById('cameraStatus');
+    const startBtn = document.getElementById('startBtn');
+    const snapshotBtn = document.getElementById('snapshotBtn');
+    const recordBtn = document.getElementById('recordBtn');
+
+    async function callCamera(path, options = {}) {
+      try {
+        const res = await fetch(`${CAMERA_SERVICE_BASE}${path}`, {
+          method: options.method || 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: options.body ? JSON.stringify(options.body) : undefined,
+          mode: 'cors',
+        });
+        const data = await res.json().catch(() => ({}));
+        return { ok: res.ok, data };
+      } catch (err) {
+        return { ok: false, data: { error: err && err.message ? err.message : String(err) } };
+      }
+    }
+
+    startBtn.addEventListener('click', async () => {
+      statusEl.textContent = 'Starting stream...';
+      const result = await callCamera('/camera/start');
+      if (result.ok) {
+        statusEl.textContent = 'Stream started. Opening player...';
+        // Navigate to full-page go2rtc player
+        window.location.href = GO2RTC_PLAYER;
+      } else {
+        statusEl.textContent = `Failed to start: ${result.data.error || 'unknown error'}`;
+      }
+    });
+
+    snapshotBtn.addEventListener('click', async () => {
+      statusEl.textContent = 'Taking snapshot...';
+      const result = await callCamera('/camera/snapshot');
+      if (result.ok && result.data && result.data.url) {
+        const url = result.data.url;
+        statusEl.innerHTML = `Snapshot saved: <a href="${url}" target="_blank">${url}</a>`;
+      } else {
+        statusEl.textContent = `Snapshot failed: ${result.data.error || 'unknown error'}`;
+      }
+    });
+
+    recordBtn.addEventListener('click', async () => {
+      statusEl.textContent = 'Starting recording (10s)...';
+      const result = await callCamera('/camera/record?duration_ms=10000');
+      if (result.ok && result.data && result.data.url) {
+        const url = result.data.url;
+        statusEl.innerHTML = `Recording saved: <a href="${url}" target="_blank">${url}</a>`;
+      } else {
+        statusEl.textContent = `Recording failed: ${result.data.error || 'unknown error'}`;
+      }
+    });
+  </script>
 </body>
 </html>
